@@ -26,3 +26,4 @@
 
 ## Index
 
+1. [S1-Boot-XV6](S1-Boot-XV6.md)
