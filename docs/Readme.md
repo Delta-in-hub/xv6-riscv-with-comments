@@ -21,8 +21,7 @@
 > https://mit-public-courses-cn-translatio.gitbook.io/mit6-s081/    xv6课程内容翻译
 
 
-
-
+> [从零开始使用Vscode调试XV6](https://zhuanlan.zhihu.com/p/501901665)
 
 ## Index
 
