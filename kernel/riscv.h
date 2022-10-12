@@ -78,6 +78,7 @@ w_sip(uint64 x)
 }
 
 // Supervisor Interrupt Enable
+// https://five-embeddev.com/riscv-isa-manual/latest/supervisor.html#sec:scause
 #define SIE_SEIE (1L << 9) // external
 #define SIE_STIE (1L << 5) // timer
 #define SIE_SSIE (1L << 1) // software
@@ -96,6 +97,7 @@ w_sie(uint64 x)
 }
 
 // Machine-mode Interrupt Enable
+// https://five-embeddev.com/riscv-isa-manual/latest/machine.html#sec:mcause
 #define MIE_MEIE (1L << 11) // external
 #define MIE_MTIE (1L << 7)  // timer
 #define MIE_MSIE (1L << 3)  // software
