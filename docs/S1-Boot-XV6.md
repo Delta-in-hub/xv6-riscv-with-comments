@@ -14,7 +14,7 @@
 
 其中，**ROM被映射到`0x1000`，DRAM被映射到`0x80000000`地址**，这两个地址之间的为IO设备的映射。
 
-![img](S1-Boot-XV6.assets/assets%2F-MHZoT2b_bcLghjAOPsJ%2F-MK_UbCc81Y4Idzn55t8%2F-MKaeaT3eXOyG4jfKKU7%2Fimage.png)
+![img](S1-Boot-XV6.assets/image-memory-map.png)
 
 
 
