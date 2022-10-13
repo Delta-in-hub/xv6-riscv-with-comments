@@ -125,9 +125,16 @@ walkaddr(pagetable_t pagetable, uint64 va)
   return pa;
 }
 
-// add a mapping to the kernel page table.
-// only used when booting.
-// does not flush TLB or enable paging.
+
+/**
+ * @brief add a mapping to the kernel page table. only used when booting. does not flush TLB or enable paging.
+ * 
+ * @param kpgtbl 
+ * @param va virtual address
+ * @param pa physics address
+ * @param sz size
+ * @param perm R/W/X/... flag
+ */
 void
 kvmmap(pagetable_t kpgtbl, uint64 va, uint64 pa, uint64 sz, int perm)
 {

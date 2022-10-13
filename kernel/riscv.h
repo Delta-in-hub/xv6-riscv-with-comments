@@ -354,7 +354,7 @@ typedef uint64 *pagetable_t; // 512 PTEs
 #define PTE_FLAGS(pte) ((pte) & 0x3FF)
 
 // extract the three 9-bit page table indices from a virtual address.
-#define PXMASK          0x1FF // 9 bits
+#define PXMASK          0x1FF // 9 bits - 0b1 1111 1111
 #define PXSHIFT(level)  (PGSHIFT+(9*(level)))
 #define PX(level, va) ((((uint64) (va)) >> PXSHIFT(level)) & PXMASK)
 
