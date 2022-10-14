@@ -26,5 +26,13 @@
 
 ## Index
 
-1. [S1-Boot-XV6](S1-Boot-XV6.md)  [zhihu update waitting]
+1. [S1-Boot-XV6](S1-Boot-XV6.md)
 2. [S2-Address Spaces and Page Table](./S2-AddressSpaces-PageTable.md)
+3. [S3-Kalloc improved](./S3-Kalloc.md)
+
+
+
+## Milestone
+  - Improved kalloc with TLAB(thread-local allocation buffer)
+  - 
+

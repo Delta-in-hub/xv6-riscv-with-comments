@@ -1,3 +1,4 @@
+#! https://zhuanlan.zhihu.com/p/573753667
 # S3 - Kernel Memory Allocation
 
 > http://xv6.dgs.zone/tranlate_books/book-riscv-rev1/c3/s5.html
@@ -100,4 +101,12 @@ XV6使用free-list链表管理内存，经过初始化，链表里有32734个页
 
 
 代码也很短，只多加100多行，见下面的链接。
+
+https://github.com/Delta-in-hub/xv6-riscv-with-comments/blob/724445e02a5b4f5af1798c051f144f09af4c8447/kernel/kalloc.c#L101
+
+
+
+
+
+
 
