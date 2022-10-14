@@ -80,3 +80,10 @@ kalloc(void)
     memset((char*)r, 5, PGSIZE); // fill with junk
   return (void*)r;
 }
+
+// Modified by Delta [START]
+#define ROUND_UP(N, S) ((((N) + (S) - 1) / (S)) * (S))
+#define ROUND_DOWN(N,S) ((uint64)(N / S) * S)
+
+
+// Modified by Delta [END]
