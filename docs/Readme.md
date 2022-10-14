@@ -26,5 +26,5 @@
 
 ## Index
 
-1. [S1-Boot-XV6](S1-Boot-XV6.md)
+1. [S1-Boot-XV6](S1-Boot-XV6.md)  [zhihu update waitting]
 2. [S2-Address Spaces and Page Table](./S2-AddressSpaces-PageTable.md)

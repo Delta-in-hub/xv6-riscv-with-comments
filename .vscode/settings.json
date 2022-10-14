@@ -7,6 +7,7 @@
         "stat.h": "c",
         "param.h": "c",
         "types.h": "c",
-        "strings.h": "c"
+        "strings.h": "c",
+        "riscv.h": "c"
     }
 }

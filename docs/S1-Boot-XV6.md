@@ -396,6 +396,10 @@ _entry:
 4. 设置PMP(Physical Memory Protection)
 5. 初始化时钟中断
    1. 中断部分最复杂了😭
+6. 将hartid存到tp寄存器里
+   1. `mhartid`寄存器是个M-mode寄存器，在S-mode下无法读取。而操作系统跑在S-mode下，因此OS要想知道是哪个hart在执行，就要用某种方式维护这个信息。XV6的做法是：在M-mode时将hartid存到`tp`寄存器里，此后对这个寄存器只读不写。
+
+7. 执行`mret`变成S-mode，并进入`main.c`
 
 
 
