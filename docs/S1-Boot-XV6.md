@@ -3,6 +3,19 @@
 
 
 
+Boot过程是和硬件平台强相关的，因此要了解XV6的启动过程，就必须对RISC-V ISA以及我们使用的`qemu-riscv -machine virt`有一定的了解。
+
+
+
+CPU通电后会进行 reset，初始化众多寄存器的状态，我们主要关注pc 寄存器的变化。` pc `寄存器指向CPU将要执行的代码的地址，而对于物理地址的编码RISC-V使用Memory-mapped IO的形式，即将IO端口与ROM，DRAM等等编址到同一个地址空间。
+
+
+
+操作系统得到CPU控制权后，操作系统的初始化过程也大多在操作Control and Status Registers (CSRs)，依旧是和RISC-V平台强相关的，因此简要介绍了RISC-V的几个CSR。
+
+
+
+
 ## Memory-mapped IO
 
 现代的体系结构大多使用[MMIO](https://en.wikipedia.org/wiki/Memory-mapped_I/O)的形式，即使用相同的地址总线来寻址内存和输入输出设备（简称I/O设备），前提是I/O设备上的设备内存和寄存器都已经被映射到内存空间的某个地址。这样当CPU访问某个地址的时候，可能是要访问某一部分物理内存，也可能是要访问I/O设备上的内存。因此，设备内存也可以通过内存访问指令来完成读写。

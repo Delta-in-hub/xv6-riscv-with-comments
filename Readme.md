@@ -9,3 +9,9 @@ xv6-riscv-with-comments-and-vscode-configuration
 ## Documents
 
 [Docs](docs/)
+
+## Milestone
+  - Improved kalloc with TLAB(thread-local allocation buffer)
+  - 
+
+

@@ -32,7 +32,3 @@
 
 
 
-## Milestone
-  - Improved kalloc with TLAB(thread-local allocation buffer)
-  - 
-
