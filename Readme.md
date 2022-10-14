@@ -8,4 +8,4 @@ xv6-riscv-with-comments-and-vscode-configuration
 
 ## Documents
 
-[Docs](docs/Readme.md)
+[Docs](docs/)
