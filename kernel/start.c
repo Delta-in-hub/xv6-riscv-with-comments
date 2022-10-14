@@ -9,7 +9,7 @@ void timerinit();
 
 // entry.S needs one stack per CPU.
 //!  In the standard RISC-V calling convention, the stack pointer is ** always kept 16-byte aligned **.
-__attribute__ ((aligned (16))) char stack0[4096 * NCPU];
+__attribute__((aligned(16))) char stack0[4096 * NCPU];
 
 // a scratch area per CPU for machine-mode timer interrupts.
 uint64 timer_scratch[NCPU][5];
@@ -18,13 +18,12 @@ uint64 timer_scratch[NCPU][5];
 extern void timervec();
 
 // entry.S jumps here in machine mode on stack0.
-void
-start()
+void start()
 {
   // set M Previous Privilege mode to Supervisor, for mret.
   unsigned long x = r_mstatus();
   x &= ~MSTATUS_MPP_MASK; // "xPP holds the previous privilege mode (x=M,S or U). The xPP fields can only hold privilege modes up to x, so MPP is two bits wide, SPP is one bit wide, and UPP is implicitly zero."
-  x |= MSTATUS_MPP_S; // set mpp to supervisor mode(0b01)
+  x |= MSTATUS_MPP_S;     // set mpp to supervisor mode(0b01)
   w_mstatus(x);
 
   // set M Exception Program Counter to main, for mret.
@@ -45,9 +44,9 @@ start()
   // configure Physical Memory Protection to give supervisor mode
   // access to all of physical memory.
   w_pmpaddr0(0x3fffffffffffffull); // 13 * 4 + 2 = 54(count 1 start from low bit)
-  //0xf = 0b1111 , L = 1 , A = 3 , X = 1 , W = 1 , R = 1
-  // PMP entry is locked,readable,writable,execable.
-  // NAPOT: base=0x0 , range = 2^(3+54)
+  // 0xf = 0b1111 , L = 1 , A = 3 , X = 1 , W = 1 , R = 1
+  //  PMP entry is locked,readable,writable,execable.
+  //  NAPOT: base=0x0 , range = 2^(3+54)
   w_pmpcfg0(0xf);
 
   // ask for clock interrupts.
@@ -66,8 +65,7 @@ start()
 // at timervec in kernelvec.S,
 // which turns them into software interrupts for
 // devintr() in trap.c.
-void
-timerinit()
+void timerinit()
 {
   // each CPU has a separate source of timer interrupts.
   int id = r_mhartid();
@@ -77,7 +75,7 @@ timerinit()
   // https://github.com/qemu/qemu/blob/e46e2628e9fcce39e7ae28ac8c24bcc643ac48eb/include/hw/intc/riscv_aclint.h#L78
   int interval = 1000000; // cycles; about 1/10th second in qemu.
   // A timer interrupt becomes pending whenever `mtime` contains a value greater than or equal to `mtimecmp`
-  *(uint64*)CLINT_MTIMECMP(id) = *(uint64*)CLINT_MTIME + interval;
+  *(uint64 *)CLINT_MTIMECMP(id) = *(uint64 *)CLINT_MTIME + interval;
 
   // prepare information in scratch[] for timervec.
   // scratch[0..2] : space for timervec to save registers.
