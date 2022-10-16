@@ -1,4 +1,5 @@
- 
+#! https://zhuanlan.zhihu.com/p/574220420
+
 
 # S4 - Trap and System call
 
@@ -18,7 +19,7 @@
 
 
 
-### Trap机制
+## Trap机制
 
 
 
@@ -52,7 +53,7 @@ Trap之后，系统进入S-mode（内核态），与用户态相比，进入内�
 
 
 
-### System call
+## System call
 
 接下来，我们以在用户态执行`write（）`系统调用为例，说明整个trap的过程。
 
@@ -89,7 +90,7 @@ ecall
 
 
 
-#### `libc`  of xv6
+### `libc`  of xv6
 
 > https://linux.die.net/man/7/libc
 >
@@ -158,7 +159,7 @@ write:
 
 回到主题，将`SYS_write`放到`a7`寄存器后，便执行了`ecall`，执行完便进入了S-mode。
 
-#### `ecall`
+### `ecall`
 
 > **ecall**(environment call)，当我们在 S 态执行这条指令时，会触发一个 ecall-from-s-mode-exception，从而进入 M 模式中的中断处理流程（如设置定时器等）；当我们在 U 态执行这条指令时，会触发一个 ecall-from-u-mode-exception，从而进入 S 模式中的中断处理流程（常用来进行系统调用）。
 
@@ -220,7 +221,7 @@ XV6根据执行的是用户代码还是内核代码对`stvec`有特别的处理�
 
 
 
-#### `uservec`
+### `uservec`
 
 该函数位于`kernel/trampoline.S`。
 
@@ -252,7 +253,7 @@ XV6根据执行的是用户代码还是内核代码对`stvec`有特别的处理�
 
 
 
-#### `usertrap()`
+### `usertrap()`
 
 
 
