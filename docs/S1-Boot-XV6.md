@@ -426,39 +426,130 @@ _entry:
 
 所有hart都会运行到这，但只有hart0去执行各部件的初始化。
 
-```c
-  if(cpuid() == 0){
-    consoleinit();
-    printfinit();
-    printf("\n");
-    printf("xv6 kernel is booting\n");
-    printf("\n");
-    kinit();         // physical page allocator
-    kvminit();       // create kernel page table
-    kvminithart();   // turn on paging
-    procinit();      // process table
-    trapinit();      // trap vectors
-    trapinithart();  // install kernel trap vector
-    plicinit();      // set up interrupt controller
-    plicinithart();  // ask PLIC for device interrupts
-    binit();         // buffer cache
-    iinit();         // inode table
-    fileinit();      // file table
-    virtio_disk_init(); // emulated hard disk
-    userinit();      // first user process
-    __sync_synchronize(); // It is a atomic builtin for full memory barrier.
-    // No memory operand will be moved across the operation, either forward or backward. Further, instructions will be issued as necessary to prevent the processor from speculating loads across the operation and from queuing stores after the operation.
-    started = 1;
-  } else {
-    while(started == 0)
-      ;
-    __sync_synchronize();
-    printf("hart %d starting\n", cpuid());
-    kvminithart();    // turn on paging
-    trapinithart();   // install kernel trap vector
-    plicinithart();   // ask PLIC for device interrupts
-  }
+
+
+> 在这些初始化的函数中，现在需要关注的是 `userinit()`。在这个函数内，会完成第一个 `User Mode` 程序的创建。
+>
+> 这个函数的操作就是手动创建了一个用户进程，将这个进程设置为 `RUNNABLE` 状态，以便 cpu 进行调度执行。这里有个有意思的地方，`userinit()` 创建用户进程的方式，是直接使用程序的二进制形式来创建。
+>
+> 这个用户程序的二进制代码定义直接硬编码在 `initcode` 这个数组里，相应的可执行程序是 `user/initcode`。
+>
+> `initcode` 的定义在 user/initcode.S。这个程序就是 Xv6 所创建的第一个用户态程序，从 `userinit()` 中可以看出，第一个用户态程序只能以靠手动的形式来创建，所以会要求它足够的**简单**。因此，`initcode` 更像一个**楔子**，用来引出真正的带有逻辑的用户程序。
+>
+> 从代码中可以看出，`initcode` 就是利用 `exec` 这个系统调用来创建出一个更为复杂的可执行程序。它会将 `init` 这个程序加载到 `a0`，这个便是需要创建的程序的程序名，而后将参数 `argv` 加载到 `a1`。`exec` 这个系统调用的调用号是 7，所以需要将 7 加载到 `a7` 上。相关的操作完成后，就会调用 `ecall` 将控制权交回给操作系统。
+>
+> 通过上述的流程，可以正确地创建出真正意义上的第一个用户态程序，`init`。这个程序的源代码在 `user/init.c`。从代码里可以看出，这个程序唯一目的就是修改文件描述符，将 0 和 1 强制设定为标准输入输出。并且维持 `sh` 的运行。
+
+
+
+`initcode init sh`全都跑在用户态下
+
 ```
+ [hardcode]      exec()                         exec()
+user/initcode ------------>   kernel/init    ----------->   user/sh
+```
+
+
+
+
+
+这里请注意`initcode.S`的注释，`initcode`是跑在用户态的。
+
+```assembly
+# Initial process that execs /init.
+# This code runs in user space.
+```
+
+
+
+那么，问题来了，在`main.c`的时候，XV6跑在S-mode，而`user/initcode`是第一个跑在U-mode的程序，那XV6是什么时候从S-mode进入U-mode的呢 ？
+
+
+
+## XV6第一次进入用户态
+
+首先了解下，RISC-V的calling convention，与x86把返回地址压在栈里的方式不同，RISC-V把返回地址放到`ra`寄存器中。
+
+在整个过程中，我们将追踪`ra`返回地址寄存器，`sp`栈指针寄存器。
+
+
+
+在`userinit（）`函数中，将创建`initcode`的进程，并设置该进程的一些信息，如下
+
+```c
+  p->context.ra = (uint64)forkret;
+  p->context.sp = p->kstack + PGSIZE;
+
+  p->sz = PGSIZE;
+  p->trapframe->epc = 0;     // user program counter
+  p->trapframe->sp = PGSIZE; // user stack pointer
+```
+
+同为用户进程，但XV6对于这个`initcode`第一个用户进程有一些特别的处理，`  uvmfirst(p->pagetable, initcode, sizeof(initcode))`，XV6为`initcode`这个进程仅分配一个page的空间。
+
+
+
+`initcode`的地址空间如下，也就是说该进程的地址空间中没有`heap`段，且`stack`与`.text`段加在一起共占1个page（因为这个程序非常小，只是个胶水代码，这样做没问题）。
+
+```c
+---------
+trampoline
+--------- 
+trapframe
+--------- 4096
+stack
+--------- ...
+.text
+--------- 0
+```
+
+
+
+至此，`initcode`进程设置完成，在`scheduler()`中会真正调度到CPU上。
+
+在`swtch`中，会用`p->context`中的内容替换当前寄存器。即`ra=forkret`，`sp=p->kstack + PGSIZE`，也就是说执行完`swtch`，会跳到`forktret()`函数，使用的是内核栈。 *任何用户进程在初次启动时都会从这个forkret()开始*
+
+> 学生提问：所以当swtch函数返回时，CPU会执行forkret中的指令，就像forkret刚刚调用了swtch函数并且返回了一样？
+>
+> Robert教授：是的，从switch返回就直接跳到了forkret的最开始位置。
+>
+> 学生提问：因吹斯听，我们会在其他场合调用forkret吗？还是说它只会用在这？
+>
+> Robert教授：是的，它只会在启动进程的时候以这种奇怪的方式运行。
+
+在`forkret()`中会调用`usertrapret()`。
+
+
+
+在`usertrapret()`中，会设置`sepc`寄存器为`p->trapframe->epc`，也就是`0`。然后将page table地址作为参数，调用`trampoline.S中的userret`函数。
+
+
+
+在`userret`中，设置页表寄存器`satp`，也就是现在已经从内核地址空间切换到了用户进程地址空间（内核地址空间和用户地址空间的trampoline的虚拟地址相同，因此可以继续执行代码而不会出错）。并从` p->trapframe`加载寄存器，`ra=p->trapframe->ra`是一个没有意义的值，`sp=p->trapframe->sp = PGSIZE`，此时切换到了initcode进程的用户栈（见`initcode`的地址空间）。最后执行`sret`。
+
+
+
+在`userret`中执行 `sret`，会从S-mode进入U-mode，并用`sepc`寄存器值替换`pc`寄存器。此时`pc=0`，XV6进入了用户态，并从头开始执行`initcode`中的代码。
+
+这就是XV6第一次从内核态进入用户态的过程。
+
+
+
+`initcode`使用`exec()`系统调用，调用`kernel/init`程序，`kernel/init`调用`user/sh`程序，就是我们进入XV6看到的shell程序。
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -72,6 +72,24 @@ MMU并不会保存page table，page table保存在内存中，MMU只是会去查
 
 ![img](S2-AddressSpaces-PageTable.assets/p2.png)
 
+- V：PTE是否有效，当为0时PTE无效，剩余的其他bits无意义，可以被随意使用。
+- RWX：readable, writable,  executable
+  - 当三个bits都是0时，该PTE指向下一层page table。否则，该PTE为叶节点。
+- U：在User mode下是否可以访问该page。U=1，U-mode下可以访问。
+  - 此外，该标志位也对S-mode存在限制。
+  - 当`sstatus`寄存器中的`SUM (permit Supervisor User Memory access)`字段为1时，S-mode下可以读写 U = 1 的page。否则不行。（U=0 的page，S-mode随意访问）。
+  - 无论如何，S-mode下不能执行U = 1 page 中的代码。
+- G：全局映射标志
+  - 对于非叶 PTE，全局设置意味着页表后续级别中的所有映射都是全局的。
+  - 请注意，未能将全局映射标记为全局映射只会降低性能，而将非全局映射标记为全局映射是一个软件错误。
+- A：The A bit indicates the virtual page has been read, written, or fetched from since the last time the A bit was cleared. 
+- D：The D bit indicates the virtual page has been written since the last time the D bit was cleared.
+- For **non-leaf** PTEs, the D, A, and U bits are reserved for future standard use and **must be cleared** by software for forward compatibility.
+
+
+
+
+
 XV6使用Sv39 RISC-V，也就是64位地址中前25位不使用(必须全赋值0)，仅使用后39位作为地址。
 
 RISC-V内存管理的最小单位是$ 2^{12} = 4KB $，也就是1 page.

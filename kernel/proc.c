@@ -476,7 +476,7 @@ void scheduler(void)
         // before jumping back to us.
         p->state = RUNNING;
         c->proc = p;
-        swtch(&c->context, &p->context);
+        swtch(&c->context, &p->context); //(a0,a1)
 
         // Process is done running for now.
         // It should have changed its p->state before coming back.
@@ -525,6 +525,7 @@ void yield(void)
 
 // A fork child's very first scheduling by scheduler()
 // will swtch to forkret.
+//Now `ra` is address of forkret() , `sp` points to kstack
 void forkret(void)
 {
   static int first = 1;
