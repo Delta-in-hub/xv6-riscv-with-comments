@@ -255,21 +255,86 @@ XV6根据执行的是用户代码还是内核代码对`stvec`有特别的处理�
 
 ### `usertrap()`
 
-
-
 > https://mit-public-courses-cn-translatio.gitbook.io/mit6-s081/lec06-isolation-and-system-call-entry-exit-robert/6.6-usertrap
 
 
 
-`scause` reg
+因为切换到了内核栈，现在就可以执行C代码了。
+
+上文讲过，当在内核态时，`stvec`指向`kernelvec`(kernel/kernelvec.S)，首先要来修改这个寄存器。
+
+然后通过`scause`判断中断trap来源。
+
+![img](S4-Trap-Syscall.assets/supervisor_10.png)
+
+- The Interrupt bit in the `scause` register is set if the trap was caused by an interrupt. 
+- The Exception Code field contains a code identifying the last exception or interrupt. 
+
+| Interrupt | Exception Code | Description                          |      |
+| --------: | -------------: | :----------------------------------- | :--- |
+|         1 |              0 | *Reserved*                           |      |
+|         1 |              1 | Supervisor software interrupt        |      |
+|         1 |            2–4 | *Reserved*                           |      |
+|         1 |              5 | Supervisor timer interrupt           |      |
+|         1 |            6–8 | *Reserved*                           |      |
+|         1 |              9 | Supervisor external interrupt        |      |
+|         1 |          10–15 | *Reserved*                           |      |
+|         1 |            ≥16 | *Designated for platform use*        |      |
+|         0 |              0 | Instruction address misaligned       |      |
+|         0 |              1 | Instruction access fault             |      |
+|         0 |              2 | Illegal instruction                  |      |
+|         0 |              3 | Breakpoint                           |      |
+|         0 |              4 | Load address misaligned              |      |
+|         0 |              5 | Load access fault                    |      |
+|         0 |              6 | Store/AMO address misaligned         |      |
+|         0 |              7 | Store/AMO access fault               |      |
+|         0 |              8 | Environment call(ecall) from U-mode  |      |
+|         0 |              9 | Environment call(ecall)  from S-mode |      |
+
+> 注意如果是系统调用（ecall），我们希望在下一条指令恢复，也就是ecall之后的一条指令。所以对于系统调用，我们对于保存的用户程序计数器加4，这样我们会在ecall的下一条指令恢复，而不是重新执行ecall指令。
+>
+> 中断总是会被RISC-V的trap硬件关闭，所以在这个时间点，我们需要显式的打开中断。
+>
+> 然后执行syscall()，它的作用是从syscall表单中，根据系统调用的编号查找相应的系统调用函数。如果你还记得之前的内容，Shell调用的write函数将a7设置成了系统调用编号，对于write来说就是16。所以syscall函数的工作就是获取由trampoline代码保存在trapframe中a7的数字，然后用这个数字索引实现了每个系统调用的表单。
 
 
 
-在RISC-V中，存储在SEPC寄存器中的程序计数器，是用户程序中触发trap的指令的地址。但是当我们恢复用户程序时，我们希望在下一条指令恢复，也就是ecall之后的一条指令。所以对于系统调用，我们对于保存的用户程序计数器加4，这样我们会在ecall的下一条指令恢复，而不是重新执行ecall指令。
 
-XV6会在处理系统调用的时候使能中断，这样中断可以更快的服务，有些系统调用需要许多时间处理。中断总是会被RISC-V的trap硬件关闭，所以在这个时间点，我们需要显式的打开中断。
 
-![img](https://906337931-files.gitbook.io/~/files/v0/b/gitbook-legacy-files/o/assets%2F-MHZoT2b_bcLghjAOPsJ%2F-MLeXSrmVuN_a9L_7y63%2F-MLhU0QzZV33jeglnz9z%2Fimage.png?alt=media&token=0804ff38-292e-45bb-b0a1-3f82238b8ff3)
+### `usertrapret()`
+
+> 它首先关闭了中断。我们之前在系统调用的过程中是打开了中断的，这里关闭中断是因为我们将要更新STVEC寄存器来指向用户空间的trap处理代码，而之前在内核中的时候，我们指向的是内核空间的trap处理代码（6.6）。我们关闭中断因为当我们将STVEC更新到指向用户空间的trap处理代码时，我们仍然在内核中执行代码。如果这时发生了一个中断，那么程序执行会走向用户空间的trap处理代码，即便我们现在仍然在内核中，出于各种各样具体细节的原因，这会导致内核出错。所以我们这里关闭中断。
+>
+> 在下一行我们设置了STVEC寄存器指向trampoline代码，在那里最终会执行sret指令返回到用户空间。位于trampoline代码最后的sret指令会重新打开中断。这样，即使我们刚刚关闭了中断，当我们在执行用户代码时中断是打开的。
+>
+> 接下来的几行填入了trapframe的内容，这些内容对于执行trampoline代码非常有用。这里的代码就是：
+>
+> - 存储了kernel page table的指针
+> - 存储了当前用户进程的kernel stack
+> - 存储了usertrap函数的指针，这样trampoline代码才能跳转到这个函数（注，详见6.5中 *ld t0 (16)a0* 指令）
+> - 从tp寄存器中读取当前的CPU核编号，并存储在trapframe中，这样trampoline代码才能恢复这个数字，因为用户代码可能会修改这个数字
+>
+> 现在我们在usertrapret函数中，我们正在设置trapframe中的数据，这样下一次从用户空间转换到内核空间时可以用到这些数据。
+
+
+
+
+
+### `userret`
+
+此时，又回到了汇编。
+
+切换到用户页表，恢复原来用户的寄存器，回到U-mode.
+
+> sret是我们在kernel中的最后一条指令，当我执行完这条指令：
+>
+> - 程序会切换回user mode
+> - SEPC寄存器的数值会被拷贝到PC寄存器（程序计数器）
+> - 重新打开中断
+
+
+
+
 
 
 
