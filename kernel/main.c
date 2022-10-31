@@ -7,7 +7,7 @@
 volatile static int started = 0;
 
 // start() jumps here in supervisor mode on all CPUs.
-void main()
+int main()
 {
   if (cpuid() == 0)
   {
