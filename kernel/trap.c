@@ -16,16 +16,10 @@ void kernelvec();
 
 extern int devintr();
 
-void trapinit(void)
-{
-  initlock(&tickslock, "time");
-}
+void trapinit(void) { initlock(&tickslock, "time"); }
 
 // set up to take exceptions and traps while in the kernel.
-void trapinithart(void)
-{
-  w_stvec((uint64)kernelvec);
-}
+void trapinithart(void) { w_stvec((uint64)kernelvec); }
 
 //
 // handle an interrupt, exception, or system call from user space.
@@ -178,8 +172,7 @@ int devintr()
 {
   uint64 scause = r_scause();
 
-  if ((scause & 0x8000000000000000L) &&
-      (scause & 0xff) == 9)
+  if ((scause & 0x8000000000000000L) && (scause & 0xff) == 9)
   {
     // this is a supervisor external interrupt, via PLIC.
 

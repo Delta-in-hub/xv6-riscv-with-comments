@@ -66,8 +66,7 @@ void initlog(int dev, struct superblock *sb)
 }
 
 // Copy committed blocks from log to their home location
-static void
-install_trans(int recovering)
+static void install_trans(int recovering)
 {
   int tail;
 
@@ -75,8 +74,8 @@ install_trans(int recovering)
   {
     struct buf *lbuf = bread(log.dev, log.start + tail + 1); // read log block
     struct buf *dbuf = bread(log.dev, log.lh.block[tail]);   // read dst
-    memmove(dbuf->data, lbuf->data, BSIZE);                  // copy block to dst
-    bwrite(dbuf);                                            // write dst to disk
+    memmove(dbuf->data, lbuf->data, BSIZE); // copy block to dst
+    bwrite(dbuf);                           // write dst to disk
     if (recovering == 0)
       bunpin(dbuf);
     brelse(lbuf);
@@ -85,8 +84,7 @@ install_trans(int recovering)
 }
 
 // Read the log header from disk into the in-memory log header
-static void
-read_head(void)
+static void read_head(void)
 {
   struct buf *buf = bread(log.dev, log.start);
   struct logheader *lh = (struct logheader *)(buf->data);
@@ -102,8 +100,7 @@ read_head(void)
 // Write in-memory log header to disk.
 // This is the true point at which the
 // current transaction commits.
-static void
-write_head(void)
+static void write_head(void)
 {
   struct buf *buf = bread(log.dev, log.start);
   struct logheader *hb = (struct logheader *)(buf->data);
@@ -117,8 +114,7 @@ write_head(void)
   brelse(buf);
 }
 
-static void
-recover_from_log(void)
+static void recover_from_log(void)
 {
   read_head();
   install_trans(1); // if committed, copy from log to disk
@@ -187,8 +183,7 @@ void end_op(void)
 }
 
 // Copy modified blocks from cache to log.
-static void
-write_log(void)
+static void write_log(void)
 {
   int tail;
 
@@ -203,8 +198,7 @@ write_log(void)
   }
 }
 
-static void
-commit()
+static void commit()
 {
   if (log.lh.n > 0)
   {

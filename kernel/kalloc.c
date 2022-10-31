@@ -75,8 +75,7 @@ void *pkalloc();
 // Allocate one 4096-byte page of physical memory.
 // Returns a pointer that the kernel can use.
 // Returns 0 if the memory cannot be allocated.
-void *
-kalloc(void)
+void *kalloc(void)
 {
   void *ret = pkalloc();
   if (ret)
@@ -104,10 +103,10 @@ kalloc(void)
 
 #define PER_HART_ALLOC_SIZE (1 * 1024 * 1024) // per hart has 1MB space
 
-#define assert(x)             \
-  {                           \
-    if (!(x))                 \
-      panic("assert failed"); \
+#define assert(x)                                                              \
+  {                                                                            \
+    if (!(x))                                                                  \
+      panic("assert failed");                                                  \
   }
 
 /**
@@ -163,7 +162,8 @@ void *pkalloc()
 }
 
 /**
- * @brief check if pa belongs to a hart's self-memory, if true give it back to that hart's free-list,else do nothing
+ * @brief check if pa belongs to a hart's self-memory, if true give it back to
+ * that hart's free-list,else do nothing
  *
  * @return 1 for ture, 0 for else
  */

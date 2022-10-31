@@ -152,8 +152,7 @@ void consoleintr(int c)
     procdump();
     break;
   case C('U'): // Kill line.
-    while (cons.e != cons.w &&
-           cons.buf[(cons.e - 1) % INPUT_BUF_SIZE] != '\n')
+    while (cons.e != cons.w && cons.buf[(cons.e - 1) % INPUT_BUF_SIZE] != '\n')
     {
       cons.e--;
       consputc(BACKSPACE);

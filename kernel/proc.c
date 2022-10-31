@@ -69,8 +69,7 @@ int cpuid()
 
 // Return this CPU's cpu struct.
 // Interrupts must be disabled.
-struct cpu *
-mycpu(void)
+struct cpu *mycpu(void)
 {
   int id = cpuid();
   struct cpu *c = &cpus[id];
@@ -78,8 +77,7 @@ mycpu(void)
 }
 
 // Return the current struct proc *, or zero if none.
-struct proc *
-myproc(void)
+struct proc *myproc(void)
 {
   push_off();
   struct cpu *c = mycpu();
@@ -104,8 +102,7 @@ int allocpid()
 // If found, initialize state required to run in the kernel,
 // and return with p->lock held.
 // If there are no free procs, or a memory allocation fails, return 0.
-static struct proc *
-allocproc(void)
+static struct proc *allocproc(void)
 {
   struct proc *p;
 
@@ -156,8 +153,7 @@ found:
 // free a proc structure and the data hanging from it,
 // including user pages.
 // p->lock must be held.
-static void
-freeproc(struct proc *p)
+static void freeproc(struct proc *p)
 {
   if (p->trapframe)
     kfree((void *)p->trapframe);
@@ -177,8 +173,7 @@ freeproc(struct proc *p)
 
 // Create a user page table for a given process, with no user memory,
 // but with trampoline and trapframe pages.
-pagetable_t
-proc_pagetable(struct proc *p)
+pagetable_t proc_pagetable(struct proc *p)
 {
   pagetable_t pagetable;
 
@@ -191,8 +186,8 @@ proc_pagetable(struct proc *p)
   // at the highest user virtual address.
   // only the supervisor uses it, on the way
   // to/from user space, so not PTE_U.
-  if (mappages(pagetable, TRAMPOLINE, PGSIZE,
-               (uint64)trampoline, PTE_R | PTE_X) < 0)
+  if (mappages(pagetable, TRAMPOLINE, PGSIZE, (uint64)trampoline,
+               PTE_R | PTE_X) < 0)
   {
     uvmfree(pagetable, 0);
     return 0;
@@ -200,8 +195,8 @@ proc_pagetable(struct proc *p)
 
   // map the trapframe page just below the trampoline page, for
   // trampoline.S.
-  if (mappages(pagetable, TRAPFRAME, PGSIZE,
-               (uint64)(p->trapframe), PTE_R | PTE_W) < 0)
+  if (mappages(pagetable, TRAPFRAME, PGSIZE, (uint64)(p->trapframe),
+               PTE_R | PTE_W) < 0)
   {
     uvmunmap(pagetable, TRAMPOLINE, 1, 0);
     uvmfree(pagetable, 0);
@@ -223,14 +218,12 @@ void proc_freepagetable(pagetable_t pagetable, uint64 sz)
 // a user program that calls exec("/init")
 // assembled from ../user/initcode.S
 // od -t xC ../user/initcode
-uchar initcode[] = {
-    0x17, 0x05, 0x00, 0x00, 0x13, 0x05, 0x45, 0x02,
-    0x97, 0x05, 0x00, 0x00, 0x93, 0x85, 0x35, 0x02,
-    0x93, 0x08, 0x70, 0x00, 0x73, 0x00, 0x00, 0x00,
-    0x93, 0x08, 0x20, 0x00, 0x73, 0x00, 0x00, 0x00,
-    0xef, 0xf0, 0x9f, 0xff, 0x2f, 0x69, 0x6e, 0x69,
-    0x74, 0x00, 0x00, 0x24, 0x00, 0x00, 0x00, 0x00,
-    0x00, 0x00, 0x00, 0x00};
+uchar initcode[] = {0x17, 0x05, 0x00, 0x00, 0x13, 0x05, 0x45, 0x02, 0x97,
+                    0x05, 0x00, 0x00, 0x93, 0x85, 0x35, 0x02, 0x93, 0x08,
+                    0x70, 0x00, 0x73, 0x00, 0x00, 0x00, 0x93, 0x08, 0x20,
+                    0x00, 0x73, 0x00, 0x00, 0x00, 0xef, 0xf0, 0x9f, 0xff,
+                    0x2f, 0x69, 0x6e, 0x69, 0x74, 0x00, 0x00, 0x24, 0x00,
+                    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};
 
 // Set up first user process.
 void userinit(void)
@@ -525,7 +518,7 @@ void yield(void)
 
 // A fork child's very first scheduling by scheduler()
 // will swtch to forkret.
-//Now `ra` is address of forkret() , `sp` points to kstack
+// Now `ra` is address of forkret() , `sp` points to kstack
 void forkret(void)
 {
   static int first = 1;
@@ -678,12 +671,8 @@ int either_copyin(void *dst, int user_src, uint64 src, uint64 len)
 void procdump(void)
 {
   static char *states[] = {
-      [UNUSED] "unused",
-      [USED] "used",
-      [SLEEPING] "sleep ",
-      [RUNNABLE] "runble",
-      [RUNNING] "run   ",
-      [ZOMBIE] "zombie"};
+      [UNUSED] = "unused",   [USED] = "used",      [SLEEPING] = "sleep ",
+      [RUNNABLE] = "runble", [RUNNING] = "run   ", [ZOMBIE] = "zombie"};
   struct proc *p;
   char *state;
 

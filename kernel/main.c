@@ -30,7 +30,10 @@ int main()
     virtio_disk_init();   // emulated hard disk
     userinit();           // first user process
     __sync_synchronize(); // It is a atomic builtin for full memory barrier.
-    // No memory operand will be moved across the operation, either forward or backward. Further, instructions will be issued as necessary to prevent the processor from speculating loads across the operation and from queuing stores after the operation.
+    // No memory operand will be moved across the operation, either forward or
+    // backward. Further, instructions will be issued as necessary to prevent
+    // the processor from speculating loads across the operation and from
+    // queuing stores after the operation.
     started = 1;
   }
   else

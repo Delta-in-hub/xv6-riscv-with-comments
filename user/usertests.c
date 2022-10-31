@@ -685,8 +685,7 @@ void writebig(char *s)
     }
     if (((int *)buf)[0] != n)
     {
-      printf("%s: read content of block %d is %d\n", s,
-             n, ((int *)buf)[0]);
+      printf("%s: read content of block %d is %d\n", s, n, ((int *)buf)[0]);
       exit(1);
     }
     n++;
@@ -1700,8 +1699,7 @@ void concreate(char *s)
       printf("%s: fork failed\n", s);
       exit(1);
     }
-    if (((i % 3) == 0 && pid == 0) ||
-        ((i % 3) == 1 && pid != 0))
+    if (((i % 3) == 0 && pid == 0) || ((i % 3) == 1 && pid != 0))
     {
       close(open(file, 0));
       close(open(file, 0));
@@ -2092,7 +2090,9 @@ void fourteen(char *s)
   fd = open("123456789012345/123456789012345/123456789012345", O_CREATE);
   if (fd < 0)
   {
-    printf("%s: create 123456789012345/123456789012345/123456789012345 failed\n", s);
+    printf(
+        "%s: create 123456789012345/123456789012345/123456789012345 failed\n",
+        s);
     exit(1);
   }
   close(fd);
@@ -2412,7 +2412,8 @@ void sbrkmuch(char *s)
   p = sbrk(amt);
   if (p != a)
   {
-    printf("%s: sbrk test failed to grow big address space; enough phys mem?\n", s);
+    printf("%s: sbrk test failed to grow big address space; enough phys mem?\n",
+           s);
     exit(1);
   }
 
@@ -2435,7 +2436,8 @@ void sbrkmuch(char *s)
   c = sbrk(0);
   if (c != a - PGSIZE)
   {
-    printf("%s: sbrk deallocation produced wrong address, a %x c %x\n", s, a, c);
+    printf("%s: sbrk deallocation produced wrong address, a %x c %x\n", s, a,
+           c);
     exit(1);
   }
 
@@ -2672,7 +2674,10 @@ void bigargtest(char *s)
     static char *args[MAXARG];
     int i;
     for (i = 0; i < MAXARG - 1; i++)
-      args[i] = "bigargs test: failed\n                                                                                                                                                                                                       ";
+      args[i] = "bigargs test: failed\n                                        "
+                "                                                              "
+                "                                                              "
+                "                                   ";
     args[MAXARG - 1] = 0;
     exec("echo", args);
     fd = open("bigarg-ok", O_CREATE);

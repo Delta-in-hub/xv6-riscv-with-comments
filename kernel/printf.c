@@ -26,8 +26,7 @@ static struct
 
 static char digits[] = "0123456789abcdef";
 
-static void
-printint(int xx, int base, int sign)
+static void printint(int xx, int base, int sign)
 {
   char buf[16];
   int i;
@@ -51,8 +50,7 @@ printint(int xx, int base, int sign)
     consputc(buf[i]);
 }
 
-static void
-printptr(uint64 x)
+static void printptr(uint64 x)
 {
   int i;
   consputc('0');

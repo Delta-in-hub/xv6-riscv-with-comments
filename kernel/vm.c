@@ -16,8 +16,7 @@ extern char etext[]; // kernel.ld sets this to end of kernel code.
 extern char trampoline[]; // trampoline.S
 
 // Make a direct-map page table for the kernel.
-pagetable_t
-kvmmake(void)
+pagetable_t kvmmake(void)
 {
   pagetable_t kpgtbl;
 
@@ -37,7 +36,8 @@ kvmmake(void)
   kvmmap(kpgtbl, KERNBASE, KERNBASE, (uint64)etext - KERNBASE, PTE_R | PTE_X);
 
   // map kernel data and the physical RAM we'll make use of.
-  kvmmap(kpgtbl, (uint64)etext, (uint64)etext, PHYSTOP - (uint64)etext, PTE_R | PTE_W);
+  kvmmap(kpgtbl, (uint64)etext, (uint64)etext, PHYSTOP - (uint64)etext,
+         PTE_R | PTE_W);
 
   // map the trampoline for trap entry/exit to
   // the highest virtual address in the kernel.
@@ -50,10 +50,7 @@ kvmmake(void)
 }
 
 // Initialize the one kernel_pagetable
-void kvminit(void)
-{
-  kernel_pagetable = kvmmake();
-}
+void kvminit(void) { kernel_pagetable = kvmmake(); }
 
 // Switch h/w page table register to the kernel's page table,
 // and enable paging.
@@ -80,8 +77,7 @@ void kvminithart()
 //   21..29 -- 9 bits of level-1 index.
 //   12..20 -- 9 bits of level-0 index.
 //    0..11 -- 12 bits of byte offset within the page.
-pte_t *
-walk(pagetable_t pagetable, uint64 va, int alloc)
+pte_t *walk(pagetable_t pagetable, uint64 va, int alloc)
 {
   if (va >= MAXVA)
     panic("walk");
@@ -107,8 +103,7 @@ walk(pagetable_t pagetable, uint64 va, int alloc)
 // Look up a virtual address, return the physical address,
 // or 0 if not mapped.
 // Can only be used to look up user pages.
-uint64
-walkaddr(pagetable_t pagetable, uint64 va)
+uint64 walkaddr(pagetable_t pagetable, uint64 va)
 {
   pte_t *pte;
   uint64 pa;
@@ -128,7 +123,8 @@ walkaddr(pagetable_t pagetable, uint64 va)
 }
 
 /**
- * @brief add a mapping to the kernel page table. only used when booting. does not flush TLB or enable paging.
+ * @brief add a mapping to the kernel page table. only used when booting. does
+ * not flush TLB or enable paging.
  *
  * @param kpgtbl
  * @param va virtual address
@@ -201,8 +197,7 @@ void uvmunmap(pagetable_t pagetable, uint64 va, uint64 npages, int do_free)
 
 // create an empty user page table.
 // returns 0 if out of memory.
-pagetable_t
-uvmcreate()
+pagetable_t uvmcreate()
 {
   pagetable_t pagetable;
   pagetable = (pagetable_t)kalloc();
@@ -229,8 +224,7 @@ void uvmfirst(pagetable_t pagetable, uchar *src, uint sz)
 
 // Allocate PTEs and physical memory to grow process from oldsz to
 // newsz, which need not be page aligned.  Returns new size or 0 on error.
-uint64
-uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz, int xperm)
+uint64 uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz, int xperm)
 {
   char *mem;
   uint64 a;
@@ -262,8 +256,7 @@ uvmalloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz, int xperm)
 // newsz.  oldsz and newsz need not be page-aligned, nor does newsz
 // need to be less than oldsz.  oldsz can be larger than the actual
 // process size.  Returns the new process size.
-uint64
-uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
+uint64 uvmdealloc(pagetable_t pagetable, uint64 oldsz, uint64 newsz)
 {
   if (newsz >= oldsz)
     return oldsz;

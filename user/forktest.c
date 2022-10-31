@@ -7,10 +7,7 @@
 
 #define N 1000
 
-void print(const char *s)
-{
-  write(1, s, strlen(s));
-}
+void print(const char *s) { write(1, s, strlen(s)); }
 
 void forktest(void)
 {

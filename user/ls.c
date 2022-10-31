@@ -3,8 +3,7 @@
 #include "user/user.h"
 #include "kernel/fs.h"
 
-char *
-fmtname(char *path)
+char *fmtname(char *path)
 {
   static char buf[DIRSIZ + 1];
   char *p;
