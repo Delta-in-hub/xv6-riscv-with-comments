@@ -261,35 +261,41 @@ XV6根据执行的是用户代码还是内核代码对`stvec`有特别的处理�
 
 因为切换到了内核栈，现在就可以执行C代码了。
 
-上文讲过，当在内核态时，`stvec`指向`kernelvec`(kernel/kernelvec.S)，首先要来修改这个寄存器。
+上文讲过，当在内核态时，`stvec`指向`kernelvec`(kernel/kernelvec.S)，首先要来修改这个寄存器，因为当在内核态和用户态的trap处理程序不同。
 
-然后通过`scause`判断中断trap来源。
+
+
+然后通过`scause`寄存器判断trap来源。
 
 ![img](S4-Trap-Syscall.assets/supervisor_10.png)
 
 - The Interrupt bit in the `scause` register is set if the trap was caused by an interrupt. 
 - The Exception Code field contains a code identifying the last exception or interrupt. 
 
-| Interrupt | Exception Code | Description                          |      |
-| --------: | -------------: | :----------------------------------- | :--- |
-|         1 |              0 | *Reserved*                           |      |
-|         1 |              1 | Supervisor software interrupt        |      |
-|         1 |            2–4 | *Reserved*                           |      |
-|         1 |              5 | Supervisor timer interrupt           |      |
-|         1 |            6–8 | *Reserved*                           |      |
-|         1 |              9 | Supervisor external interrupt        |      |
-|         1 |          10–15 | *Reserved*                           |      |
-|         1 |            ≥16 | *Designated for platform use*        |      |
-|         0 |              0 | Instruction address misaligned       |      |
-|         0 |              1 | Instruction access fault             |      |
-|         0 |              2 | Illegal instruction                  |      |
-|         0 |              3 | Breakpoint                           |      |
-|         0 |              4 | Load address misaligned              |      |
-|         0 |              5 | Load access fault                    |      |
-|         0 |              6 | Store/AMO address misaligned         |      |
-|         0 |              7 | Store/AMO access fault               |      |
-|         0 |              8 | Environment call(ecall) from U-mode  |      |
-|         0 |              9 | Environment call(ecall)  from S-mode |      |
+| Interrupt | Exception Code | Description                                         |      |
+| --------: | -------------: | :-------------------------------------------------- | :--- |
+|         1 |              0 | *Reserved*                                          |      |
+|         1 |              1 | Supervisor software interrupt                       |      |
+|         1 |            2–4 | *Reserved*                                          |      |
+|         1 |              5 | Supervisor timer interrupt                          |      |
+|         1 |            6–8 | *Reserved*                                          |      |
+|         1 |              9 | Supervisor external interrupt                       |      |
+|         1 |          10–15 | *Reserved*                                          |      |
+|         1 |            ≥16 | *Designated for platform use*                       |      |
+|         0 |              0 | Instruction address misaligned                      |      |
+|         0 |              1 | Instruction access fault                            |      |
+|         0 |              2 | Illegal instruction                                 |      |
+|         0 |              3 | Breakpoint                                          |      |
+|         0 |              4 | Load address misaligned                             |      |
+|         0 |              5 | Load access fault                                   |      |
+|         0 |              6 | Store/AMO address misaligned                        |      |
+|         0 |              7 | Store/AMO access fault                              |      |
+|         0 |              8 | **Environment call(ecall) from U-mode**(即系统调用) |      |
+|         0 |              9 | Environment call(ecall)  from S-mode                |      |
+
+
+
+如果trap是由系统调用引起：
 
 > 注意如果是系统调用（ecall），我们希望在下一条指令恢复，也就是ecall之后的一条指令。所以对于系统调用，我们对于保存的用户程序计数器加4，这样我们会在ecall的下一条指令恢复，而不是重新执行ecall指令。
 >
@@ -299,11 +305,12 @@ XV6根据执行的是用户代码还是内核代码对`stvec`有特别的处理�
 
 
 
-
+然后调用流程进入`usertrapret()`
 
 ### `usertrapret()`
 
-> 它首先关闭了中断。我们之前在系统调用的过程中是打开了中断的，这里关闭中断是因为我们将要更新STVEC寄存器来指向用户空间的trap处理代码，而之前在内核中的时候，我们指向的是内核空间的trap处理代码（6.6）。我们关闭中断因为当我们将STVEC更新到指向用户空间的trap处理代码时，我们仍然在内核中执行代码。如果这时发生了一个中断，那么程序执行会走向用户空间的trap处理代码，即便我们现在仍然在内核中，出于各种各样具体细节的原因，这会导致内核出错。所以我们这里关闭中断。
+> 它首先关闭了中断。
+> 我们之前在系统调用的过程中是打开了中断的，这里关闭中断是因为我们将要更新STVEC寄存器来指向用户空间的trap处理代码，而之前在内核中的时候，我们指向的是内核空间的trap处理代码。我们关闭中断因为当我们将STVEC更新到指向用户空间的trap处理代码时，我们仍然在内核中执行代码。如果这时发生了一个中断，那么程序执行会走向用户空间的trap处理代码，即便我们现在仍然在内核中，出于各种各样具体细节的原因，这会导致内核出错。所以我们这里关闭中断。
 >
 > 在下一行我们设置了STVEC寄存器指向trampoline代码，在那里最终会执行sret指令返回到用户空间。位于trampoline代码最后的sret指令会重新打开中断。这样，即使我们刚刚关闭了中断，当我们在执行用户代码时中断是打开的。
 >
@@ -318,11 +325,15 @@ XV6根据执行的是用户代码还是内核代码对`stvec`有特别的处理�
 
 
 
-
+然后进入汇编代码 `userret`
 
 ### `userret`
 
 此时，又回到了汇编。
+
+`userret`接受一个参数*pagetable*，根据Calling-Convention，这个参数放在`a0`寄存器里。
+
+
 
 切换到用户页表，恢复原来用户的寄存器，回到U-mode.
 
@@ -330,7 +341,7 @@ XV6根据执行的是用户代码还是内核代码对`stvec`有特别的处理�
 >
 > - 程序会切换回user mode
 > - SEPC寄存器的数值会被拷贝到PC寄存器（程序计数器）
-> - 重新打开中断
+> - 重新打开中断（这一点是由`sret`硬件指令完成的）
 
 
 
